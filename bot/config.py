@@ -45,9 +45,11 @@ class Settings(BaseSettings):
     edge_voice: str = "ro-RO-AlinaNeural"
 
     # FAL image generation (selfies)
-    fal_model: str = "fal-ai/flux/dev"
+    fal_model: str = "fal-ai/fast-sdxl"
     fal_lora_url: str | None = None
     fal_lora_scale: float = 1.0
+    nsfw_trigger: str = "goala"  # comma-separated trigger words for NSFW selfies
+    selfie_nsfw_prompt: str = ""  # NSFW prompt suffix (filled by you)
 
     @property
     def db_path(self) -> str:

@@ -92,18 +92,18 @@ def _mp3_to_ogg(mp3: bytes) -> bytes | None:
         return destination.read()
 
 
-async def generate_selfie(prompt: str) -> bytes | None:
-    """Generate a selfie via FAL (configurable model + optional LoRA)."""
+async def generate_selfie(prompt: str, use_nsfw_lora: bool = False) -> bytes | None:
+    """Generate a selfie via FAL (configurable model + optional NSFW LoRA)."""
     settings = get_settings()
     if not settings.fal_key:
         return None
     url = f"https://fal.run/{settings.fal_model}"
     headers = {"Authorization": f"Key {settings.fal_key}"}
     payload = {"prompt": prompt, "image_size": "square_hd", "num_images": 1}
-    if settings.fal_lora_url:
+    if use_nsfw_lora and settings.fal_lora_url:
         payload["loras"] = [{"path": settings.fal_lora_url, "scale": settings.fal_lora_scale}]
     try:
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=300) as client:
             response = await client.post(url, json=payload, headers=headers)
             response.raise_for_status()
             data = response.json()

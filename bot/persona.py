@@ -103,10 +103,14 @@ Acum este {now.strftime('%A, %B %d la %H:%M')} ({settings.timezone}).
 """
 
 
-def build_selfie_prompt(context: str) -> str:
-    """Build a Flux prompt that keeps Aura's look consistent."""
-    return (
+def build_selfie_prompt(context: str, nsfw: bool = False) -> str:
+    """Build a selfie prompt that keeps Aura's look consistent (optionally NSFW)."""
+    settings = get_settings()
+    prompt = (
         f"Selfie photo of {SELFIE_APPEARANCE}, taken from a slightly high angle, "
         f"soft warm indoor lighting, photorealistic, looking at the camera with a "
-        f"playful smile. Mood/context: {context[:120]}"
+        f"playful smile"
     )
+    if nsfw and settings.selfie_nsfw_prompt.strip():
+        prompt += ", " + settings.selfie_nsfw_prompt.strip().strip(",")
+    return prompt + f". Mood/context: {context[:120]}"

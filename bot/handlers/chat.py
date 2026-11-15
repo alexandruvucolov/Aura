@@ -83,7 +83,11 @@ class Debouncer:
 
         # 2) Then send optional media (selfie / voice) as follow-ups.
         if _should_selfie(combined):
-            image = await media.generate_selfie(build_selfie_prompt(combined))
+            nsfw = _is_nsfw_request(combined, container.settings.nsfw_trigger)
+            image = await media.generate_selfie(
+                build_selfie_prompt(combined, nsfw=nsfw),
+                use_nsfw_lora=nsfw,
+            )
             if image is not None:
                 await bot.send_chat_action(user_id, action="upload_photo")
                 await bot.send_photo(
@@ -128,6 +132,12 @@ def _should_voice(combined: str) -> bool:
 def _should_selfie(combined: str) -> bool:
     lowered = combined.lower()
     return any(keyword in lowered for keyword in SELFIE_KEYWORDS)
+
+
+def _is_nsfw_request(combined: str, trigger: str) -> bool:
+    lowered = combined.lower()
+    words = [word.strip().lower() for word in trigger.split(",")]
+    return any(word and word in lowered for word in words)
 
 
 @router.message(F.text, ~F.text.startswith("/"))
