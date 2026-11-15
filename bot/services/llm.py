@@ -26,7 +26,7 @@ async def chat(
     *,
     model: str | None = None,
     temperature: float = 0.9,
-    max_tokens: int = 600,
+    max_tokens: int = 2000,
 ) -> str:
     """Send a chat completion and return the trimmed assistant text."""
     settings = get_settings()

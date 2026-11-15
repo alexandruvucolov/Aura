@@ -73,7 +73,7 @@ class CheckinScheduler:
                     "content": "(Your friend hasn't texted in a while. Send a natural, casual check-in.)",
                 },
             ]
-            text = await llm.chat(messages, temperature=0.95, max_tokens=200)
+            text = await llm.chat(messages, temperature=0.95, max_tokens=600)
             if not text:
                 return
             bubble = (llm.split_bubbles(text) or [text])[0]

@@ -147,18 +147,20 @@ swapped for `chromadb` / `mem0ai` embeddings later without touching call sites.
   so it plays as a Telegram voice note (otherwise it falls back to an audio
   message).
 - **Selfies** — triggered by messages like *"trimite-mi o poză"* / *"cum arăți"* /
-  *"selfie"*. A fixed character-appearance prompt (see `persona.SELFIE_APPEARANCE`)
-  is sent to FAL's Flux endpoint so Aura stays visually consistent.
+  *"selfie"*. A fixed character-appearance prompt (see `persona.SELFIE_APPEARANCE`,
+  kept in English for best Flux results) is sent to FAL's Flux endpoint so Aura
+  stays visually consistent.
 
 Both are disabled automatically until you add the corresponding keys to `.env`.
 
-## Uncensored / adult topics
+## Language model & uncensored topics
 
-Aura uses **Dolphin Mistral 24B**
-(`cognitivecomputations/dolphin-mistral-24b-venice-edition`), an abliterated
-("uncensored") model, so she won't moralize or refuse topics. Set
-`ALLOW_UNFILTERED=true` in `.env` to also remove refusals at the prompt level.
-To go back to a more aligned model, just change `OPENROUTER_MODEL` / `SUMMARY_MODEL`.
+Aura uses **DeepSeek V4.1 Flash** (`deepseek/deepseek-v4.1-flash`) for strong
+Romanian conversation. It's an aligned model, so for very explicit/adult topics
+it may still refuse despite `ALLOW_UNFILTERED=true`. If you want a fully
+uncensored companion, switch `OPENROUTER_MODEL` to
+`cognitivecomputations/dolphin-mistral-24b-venice-edition` (Dolphin Mistral 24B,
+an abliterated model) — the trade-off is slightly weaker Romanian.
 
 ## Testing
 
