@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     elevenlabs_voice_id: str | None = None
     fal_key: str | None = None
 
+    # TTS / voice
+    tts_provider: str = "edge"  # "edge" (free, native Romanian) or "elevenlabs"
+    edge_voice: str = "ro-RO-AlinaNeural"
+
     @property
     def db_path(self) -> str:
         """Extract the plain SQLite file path from the SQLAlchemy-style URL."""

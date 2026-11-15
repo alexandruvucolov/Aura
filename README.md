@@ -109,7 +109,9 @@ Aura/
 | `ALLOW_UNFILTERED` | ❌ | `true` = discuss mature/explicit topics without refusal |
 | `CHECKIN_MIN_HOURS` / `CHECKIN_MAX_HOURS` | ❌ | Inactivity window for proactive pings |
 | `CHECKIN_DAY_START` / `CHECKIN_DAY_END` | ❌ | Daytime window (24h) for check-ins |
-| `ELEVENLABS_API_KEY` / `ELEVENLABS_VOICE_ID` | ❌ | Phase 4 — voice notes |
+| `TTS_PROVIDER` | ❌ | `edge` (free, native Romanian) or `elevenlabs` |
+| `EDGE_VOICE` | ❌ | Edge TTS voice (default `ro-RO-AlinaNeural`) |
+| `ELEVENLABS_API_KEY` / `ELEVENLABS_VOICE_ID` | ❌ | ElevenLabs voice notes (paid plan needed for library voices) |
 | `FAL_KEY` | ❌ | Phase 4 — Flux selfies |
 
 ## How it works
@@ -143,9 +145,9 @@ swapped for `chromadb` / `mem0ai` embeddings later without touching call sites.
 
 - **Voice notes** — triggered by messages like *"trimite-mi un mesaj vocal"* /
   *"vorbește-mi"* (or *"voice note"*) or randomly ~10% of the time. Audio is
-  generated with ElevenLabs and, if `ffmpeg` is installed, converted to Ogg/Opus
-  so it plays as a Telegram voice note (otherwise it falls back to an audio
-  message).
+  generated with **Edge TTS** (free, native Romanian voice `ro-RO-AlinaNeural`)
+  by default, or ElevenLabs if `TTS_PROVIDER=elevenlabs`. With `ffmpeg` installed
+  it's converted to Ogg/Opus so it plays as a Telegram voice note.
 - **Selfies** — triggered by messages like *"trimite-mi o poză"* / *"cum arăți"* /
   *"selfie"*. A fixed character-appearance prompt (see `persona.SELFIE_APPEARANCE`,
   kept in English for best Flux results) is sent to FAL's Flux endpoint so Aura

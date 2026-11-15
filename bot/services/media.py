@@ -1,7 +1,7 @@
-"""Optional Phase 4 media: ElevenLabs TTS voice notes and FAL Flux selfies.
+"""Optional media: TTS voice notes (Edge TTS / ElevenLabs) and FAL Flux selfies.
 
-Everything here degrades gracefully: when the relevant API keys are missing the
-functions simply return ``None`` and the chat handler falls back to text.
+Everything degrades gracefully: when a provider is unavailable the functions
+return ``None`` and the chat handler falls back to text.
 """
 
 from __future__ import annotations
@@ -22,25 +22,18 @@ FAL_FLUX_URL = "https://fal.run/fal-ai/flux/dev"
 
 
 async def synthesize_voice(text: str) -> tuple[bytes, str] | None:
-    """Return ``(audio_bytes, extension)`` or ``None`` if disabled/unavailable.
+    """Return ``(audio_bytes, extension)`` or ``None`` if unavailable.
 
-    Converts MP3 → Ogg/Opus when ``ffmpeg`` is available so the result can be
-    sent as a real Telegram voice note; otherwise falls back to ``mp3`` (audio).
+    Uses Edge TTS (free, native Romanian) or ElevenLabs depending on
+    ``TTS_PROVIDER``. Converts MP3 → Ogg/Opus via ``ffmpeg`` when available so
+    the result plays as a real Telegram voice note; otherwise returns ``mp3``.
     """
     settings = get_settings()
-    if not settings.elevenlabs_api_key or not settings.elevenlabs_voice_id:
-        return None
-    url = f"{ELEVENLABS_TTS_URL}/{settings.elevenlabs_voice_id}"
-    headers = {"xi-api-key": settings.elevenlabs_api_key}
-    payload = {"text": text, "model_id": "eleven_multilingual_v2"}
-    params = {"output_format": "mp3_44100_128"}
-    try:
-        async with httpx.AsyncClient(timeout=60) as client:
-            response = await client.post(url, json=payload, headers=headers, params=params)
-            response.raise_for_status()
-            mp3 = response.content
-    except Exception:
-        logger.exception("ElevenLabs TTS failed")
+    if settings.tts_provider == "elevenlabs":
+        mp3 = await _elevenlabs_tts(text, settings)
+    else:
+        mp3 = await _edge_tts(text, settings.edge_voice)
+    if not mp3:
         return None
 
     if shutil.which("ffmpeg"):
@@ -51,6 +44,38 @@ async def synthesize_voice(text: str) -> tuple[bytes, str] | None:
         except Exception:
             logger.exception("ffmpeg MP3 → Ogg conversion failed")
     return mp3, "mp3"
+
+
+async def _elevenlabs_tts(text: str, settings) -> bytes | None:
+    if not settings.elevenlabs_api_key or not settings.elevenlabs_voice_id:
+        return None
+    url = f"{ELEVENLABS_TTS_URL}/{settings.elevenlabs_voice_id}"
+    headers = {"xi-api-key": settings.elevenlabs_api_key}
+    payload = {"text": text, "model_id": "eleven_multilingual_v2"}
+    params = {"output_format": "mp3_44100_128"}
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            response = await client.post(url, json=payload, headers=headers, params=params)
+            response.raise_for_status()
+            return response.content
+    except Exception:
+        logger.exception("ElevenLabs TTS failed")
+        return None
+
+
+async def _edge_tts(text: str, voice: str) -> bytes | None:
+    try:
+        import edge_tts
+
+        communicate = edge_tts.Communicate(text, voice)
+        chunks: list[bytes] = []
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                chunks.append(chunk["data"])
+        return b"".join(chunks)
+    except Exception:
+        logger.exception("Edge TTS failed")
+        return None
 
 
 def _mp3_to_ogg(mp3: bytes) -> bytes | None:
