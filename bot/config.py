@@ -44,6 +44,11 @@ class Settings(BaseSettings):
     tts_provider: str = "edge"  # "edge" (free, native Romanian) or "elevenlabs"
     edge_voice: str = "ro-RO-AlinaNeural"
 
+    # FAL image generation (selfies)
+    fal_model: str = "fal-ai/flux/dev"
+    fal_lora_url: str | None = None
+    fal_lora_scale: float = 1.0
+
     @property
     def db_path(self) -> str:
         """Extract the plain SQLite file path from the SQLAlchemy-style URL."""

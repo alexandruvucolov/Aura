@@ -112,7 +112,9 @@ Aura/
 | `TTS_PROVIDER` | ❌ | `edge` (free, native Romanian) or `elevenlabs` |
 | `EDGE_VOICE` | ❌ | Edge TTS voice (default `ro-RO-AlinaNeural`) |
 | `ELEVENLABS_API_KEY` / `ELEVENLABS_VOICE_ID` | ❌ | ElevenLabs voice notes (paid plan needed for library voices) |
-| `FAL_KEY` | ❌ | Phase 4 — Flux selfies |
+| `FAL_KEY` | ❌ | FAL API key for selfies |
+| `FAL_MODEL` | ❌ | Image model (default `fal-ai/flux/dev`) |
+| `FAL_LORA_URL` | ❌ | Optional LoRA URL for custom/NSFW style |
 
 ## How it works
 
@@ -150,8 +152,10 @@ swapped for `chromadb` / `mem0ai` embeddings later without touching call sites.
   it's converted to Ogg/Opus so it plays as a Telegram voice note.
 - **Selfies** — triggered by messages like *"trimite-mi o poză"* / *"cum arăți"* /
   *"selfie"*. A fixed character-appearance prompt (see `persona.SELFIE_APPEARANCE`,
-  kept in English for best Flux results) is sent to FAL's Flux endpoint so Aura
-  stays visually consistent.
+  kept in English for best results) is sent to FAL. The model is configurable via
+  `FAL_MODEL` (default `fal-ai/flux/dev`); for uncensored output use an NSFW-capable
+  endpoint (e.g. `fal-ai/flux-general`, or an SDXL/Pony/Illustrious model) plus an
+  optional `FAL_LORA_URL` pointing to a Civitai/Hugging Face LoRA download.
 
 Both are disabled automatically until you add the corresponding keys to `.env`.
 

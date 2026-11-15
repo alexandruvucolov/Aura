@@ -18,7 +18,6 @@ from bot.config import get_settings
 logger = logging.getLogger(__name__)
 
 ELEVENLABS_TTS_URL = "https://api.elevenlabs.io/v1/text-to-speech"
-FAL_FLUX_URL = "https://fal.run/fal-ai/flux/dev"
 
 
 async def synthesize_voice(text: str) -> tuple[bytes, str] | None:
@@ -94,15 +93,18 @@ def _mp3_to_ogg(mp3: bytes) -> bytes | None:
 
 
 async def generate_selfie(prompt: str) -> bytes | None:
-    """Generate a consistent-character selfie via FAL Flux; returns image bytes."""
+    """Generate a selfie via FAL (configurable model + optional LoRA)."""
     settings = get_settings()
     if not settings.fal_key:
         return None
+    url = f"https://fal.run/{settings.fal_model}"
     headers = {"Authorization": f"Key {settings.fal_key}"}
     payload = {"prompt": prompt, "image_size": "square_hd", "num_images": 1}
+    if settings.fal_lora_url:
+        payload["loras"] = [{"path": settings.fal_lora_url, "scale": settings.fal_lora_scale}]
     try:
         async with httpx.AsyncClient(timeout=120) as client:
-            response = await client.post(FAL_FLUX_URL, json=payload, headers=headers)
+            response = await client.post(url, json=payload, headers=headers)
             response.raise_for_status()
             data = response.json()
         image_url = data["images"][0]["url"]
@@ -111,5 +113,5 @@ async def generate_selfie(prompt: str) -> bytes | None:
             image.raise_for_status()
             return image.content
     except Exception:
-        logger.exception("FAL Flux image generation failed")
+        logger.exception("FAL image generation failed")
         return None
