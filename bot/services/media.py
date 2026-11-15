@@ -112,6 +112,9 @@ async def generate_selfie(prompt: str) -> bytes | None:
             image = await client.get(image_url)
             image.raise_for_status()
             return image.content
+    except httpx.HTTPStatusError as exc:
+        logger.exception("FAL image generation failed: %s", exc.response.text[:500])
+        return None
     except Exception:
         logger.exception("FAL image generation failed")
         return None

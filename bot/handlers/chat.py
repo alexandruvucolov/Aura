@@ -73,52 +73,35 @@ class Debouncer:
             return
         bubbles = llm.split_bubbles(reply) or [reply]
 
-        # Optional: send a selfie when requested.
-        if _should_selfie(combined):
-            image = await media.generate_selfie(build_selfie_prompt(combined))
-            if image is not None:
-                await bot.send_chat_action(user_id, action="upload_photo")
-                caption = bubbles[0] if bubbles else "uite aici ✨"
-                await bot.send_photo(
-                    user_id, BufferedInputFile(image, filename="selfie.jpg"), caption=caption
-                )
-                await db.add_message(user_id, "assistant", f"[selfie] {caption}")
-                for bubble in bubbles[1:]:
-                    await bot.send_chat_action(user_id, action="typing")
-                    await asyncio.sleep(
-                        min(TYPING_MAX_SECONDS, max(TYPING_MIN_SECONDS, TYPING_CHAR_SECONDS * len(bubble)))
-                    )
-                    await bot.send_message(user_id, bubble)
-                    await db.add_message(user_id, "assistant", bubble)
-                await db.set_last_interaction(user_id, now.isoformat())
-                await container.memory.maybe_extract_facts(user_id)
-                return
-
-        # Optional: voice note when explicitly requested or occasionally.
-        if _should_voice(combined):
-            audio = await media.synthesize_voice(bubbles[0])
-            if audio is not None:
-                data, extension = audio
-                await bot.send_chat_action(user_id, action="record_voice")
-                if extension == "ogg":
-                    await bot.send_voice(
-                        user_id, BufferedInputFile(data, filename="voice.ogg")
-                    )
-                else:
-                    await bot.send_audio(
-                        user_id, BufferedInputFile(data, filename="voice.mp3")
-                    )
-                await db.add_message(user_id, "assistant", f"[voice note] {bubbles[0]}")
-                await db.set_last_interaction(user_id, now.isoformat())
-                await container.memory.maybe_extract_facts(user_id)
-                return
-
+        # 1) Always send the text reply first so the user gets an answer immediately.
         for bubble in bubbles:
             await bot.send_chat_action(user_id, action="typing")
             pause = min(TYPING_MAX_SECONDS, max(TYPING_MIN_SECONDS, TYPING_CHAR_SECONDS * len(bubble)))
             await asyncio.sleep(pause)
             await bot.send_message(user_id, bubble)
             await db.add_message(user_id, "assistant", bubble)
+
+        # 2) Then send optional media (selfie / voice) as follow-ups.
+        if _should_selfie(combined):
+            image = await media.generate_selfie(build_selfie_prompt(combined))
+            if image is not None:
+                await bot.send_chat_action(user_id, action="upload_photo")
+                await bot.send_photo(
+                    user_id, BufferedInputFile(image, filename="selfie.jpg"),
+                    caption=bubbles[0] if bubbles else None,
+                )
+                await db.add_message(user_id, "assistant", f"[selfie] {bubbles[0] if bubbles else ''}")
+
+        if _should_voice(combined):
+            audio = await media.synthesize_voice(bubbles[0])
+            if audio is not None:
+                data, extension = audio
+                await bot.send_chat_action(user_id, action="record_voice")
+                if extension == "ogg":
+                    await bot.send_voice(user_id, BufferedInputFile(data, filename="voice.ogg"))
+                else:
+                    await bot.send_audio(user_id, BufferedInputFile(data, filename="voice.mp3"))
+                await db.add_message(user_id, "assistant", f"[voice note] {bubbles[0]}")
 
         await db.set_last_interaction(user_id, now.isoformat())
         await container.memory.maybe_extract_facts(user_id)
@@ -139,9 +122,7 @@ SELFIE_KEYWORDS = (
 
 def _should_voice(combined: str) -> bool:
     lowered = combined.lower()
-    if any(keyword in lowered for keyword in VOICE_KEYWORDS):
-        return True
-    return random.random() < 0.10
+    return any(keyword in lowered for keyword in VOICE_KEYWORDS)
 
 
 def _should_selfie(combined: str) -> bool:
