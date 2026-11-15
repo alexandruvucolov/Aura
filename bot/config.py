@@ -28,7 +28,8 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./companion.db"
 
     # Persona / behaviour
-    timezone: str = "UTC"
+    timezone: str = "Europe/Bucharest"
+    allow_unfiltered: bool = False
     checkin_min_hours: int = 18
     checkin_max_hours: int = 36
     checkin_day_start: int = 9

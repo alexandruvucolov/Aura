@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 async def set_default_commands(bot: Bot) -> None:
     await bot.set_my_commands(
         [
-            BotCommand(command="start", description="Say hi"),
-            BotCommand(command="reset", description="Clear recent chat history"),
-            BotCommand(command="memory", description="See what Aura remembers"),
+            BotCommand(command="start", description="Salut"),
+            BotCommand(command="reset", description="Șterge istoricul recent"),
+            BotCommand(command="memory", description="Ce își amintește Aura"),
         ]
     )
 

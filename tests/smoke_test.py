@@ -40,7 +40,8 @@ def test_persona() -> None:
     assert "Aura" in prompt
     assert "Max" in prompt
     assert "|||" in prompt
-    assert "3 day" in prompt  # humanized gap
+    assert "română" in prompt  # speaks Romanian
+    assert "Prietenul tău" in prompt  # humanized gap (Romanian)
 
     checkin = build_checkin_prompt(now=now, facts=["User has a dog named Max"])
     assert "Aura" in checkin

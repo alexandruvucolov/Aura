@@ -15,6 +15,8 @@ notes, and checks in proactively when you go quiet.
   prompt before every reply.
 - **Time-aware persona** — Aura knows the current time and how long it's been
   since you last texted, so she reacts naturally to gaps and late-night messages.
+- **Romanian-first** — Aura lives in București (Europe/Bucharest timezone) and
+  chats in Romanian by default; ask for a selfie or a voice note anytime.
 - **Proactive check-ins** — an APScheduler job pings you after 18–36 hours of
   silence (within daytime hours), with a cooldown to avoid spam.
 - **Voice notes & selfies (optional)** — ElevenLabs TTS (with `ffmpeg` →
@@ -103,7 +105,8 @@ Aura/
 | `OPENROUTER_MODEL` | ❌ | Main chat model |
 | `SUMMARY_MODEL` | ❌ | Model used for fact extraction |
 | `DATABASE_URL` | ❌ | `sqlite+aiosqlite:///./companion.db` |
-| `TIMEZONE` | ❌ | IANA zone, e.g. `Europe/Lisbon` (default `UTC`) |
+| `TIMEZONE` | ❌ | IANA zone (default `Europe/Bucharest`) |
+| `ALLOW_UNFILTERED` | ❌ | `true` = discuss mature/explicit topics without refusal |
 | `CHECKIN_MIN_HOURS` / `CHECKIN_MAX_HOURS` | ❌ | Inactivity window for proactive pings |
 | `CHECKIN_DAY_START` / `CHECKIN_DAY_END` | ❌ | Daytime window (24h) for check-ins |
 | `ELEVENLABS_API_KEY` / `ELEVENLABS_VOICE_ID` | ❌ | Phase 4 — voice notes |
@@ -138,14 +141,24 @@ swapped for `chromadb` / `mem0ai` embeddings later without touching call sites.
 
 ## Voice notes & selfies (Phase 4)
 
-- **Voice notes** are triggered when you ask for one (e.g. *"send me a voice
-  note"*) or randomly ~10% of the time. Audio is generated with ElevenLabs and,
-  if `ffmpeg` is installed, converted to Ogg/Opus so it plays as a Telegram voice
-  note (otherwise it falls back to an audio message).
-- **Selfies** can be added by calling `services.media.generate_selfie(prompt)` in
-  the chat handler; it uses FAL's Flux endpoint.
+- **Voice notes** — triggered by messages like *"trimite-mi un mesaj vocal"* /
+  *"vorbește-mi"* (or *"voice note"*) or randomly ~10% of the time. Audio is
+  generated with ElevenLabs and, if `ffmpeg` is installed, converted to Ogg/Opus
+  so it plays as a Telegram voice note (otherwise it falls back to an audio
+  message).
+- **Selfies** — triggered by messages like *"trimite-mi o poză"* / *"cum arăți"* /
+  *"selfie"*. A fixed character-appearance prompt (see `persona.SELFIE_APPEARANCE`)
+  is sent to FAL's Flux endpoint so Aura stays visually consistent.
 
 Both are disabled automatically until you add the corresponding keys to `.env`.
+
+## Uncensored / adult topics
+
+Aura uses **Dolphin Mistral 24B**
+(`cognitivecomputations/dolphin-mistral-24b-venice-edition`), an abliterated
+("uncensored") model, so she won't moralize or refuse topics. Set
+`ALLOW_UNFILTERED=true` in `.env` to also remove refusals at the prompt level.
+To go back to a more aligned model, just change `OPENROUTER_MODEL` / `SUMMARY_MODEL`.
 
 ## Testing
 

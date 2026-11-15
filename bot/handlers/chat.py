@@ -12,7 +12,7 @@ from aiogram import F, Router
 from aiogram.types import BufferedInputFile, Message
 
 from bot.container import Container
-from bot.persona import build_system_prompt
+from bot.persona import build_selfie_prompt, build_system_prompt
 from bot.services import llm, media
 
 logger = logging.getLogger(__name__)
@@ -73,6 +73,27 @@ class Debouncer:
             return
         bubbles = llm.split_bubbles(reply) or [reply]
 
+        # Optional: send a selfie when requested.
+        if _should_selfie(combined):
+            image = await media.generate_selfie(build_selfie_prompt(combined))
+            if image is not None:
+                await bot.send_chat_action(user_id, action="upload_photo")
+                caption = bubbles[0] if bubbles else "uite aici ✨"
+                await bot.send_photo(
+                    user_id, BufferedInputFile(image, filename="selfie.jpg"), caption=caption
+                )
+                await db.add_message(user_id, "assistant", f"[selfie] {caption}")
+                for bubble in bubbles[1:]:
+                    await bot.send_chat_action(user_id, action="typing")
+                    await asyncio.sleep(
+                        min(TYPING_MAX_SECONDS, max(TYPING_MIN_SECONDS, TYPING_CHAR_SECONDS * len(bubble)))
+                    )
+                    await bot.send_message(user_id, bubble)
+                    await db.add_message(user_id, "assistant", bubble)
+                await db.set_last_interaction(user_id, now.isoformat())
+                await container.memory.maybe_extract_facts(user_id)
+                return
+
         # Optional: voice note when explicitly requested or occasionally.
         if _should_voice(combined):
             audio = await media.synthesize_voice(bubbles[0])
@@ -103,11 +124,29 @@ class Debouncer:
         await container.memory.maybe_extract_facts(user_id)
 
 
+VOICE_KEYWORDS = (
+    "voice note", "voice message", "mesaj vocal", "trimite-mi un mesaj vocal",
+    "trimite un mesaj vocal", "vorbeste-mi", "vorbește-mi", "cu vocea",
+)
+
+SELFIE_KEYWORDS = (
+    "selfie", "poza", "poză", "o poza cu tine", "o poză cu tine", "cum arati",
+    "cum arăți", "arată-mi", "aratami", "trimite o poza", "trimite o poză",
+    "trimite-mi o poza", "trimite-mi o poză", "fă-ți un selfie", "fa-ti un selfie",
+    "cum te vezi", "cum arati tu",
+)
+
+
 def _should_voice(combined: str) -> bool:
     lowered = combined.lower()
-    if "voice note" in lowered or "voice message" in lowered:
+    if any(keyword in lowered for keyword in VOICE_KEYWORDS):
         return True
     return random.random() < 0.10
+
+
+def _should_selfie(combined: str) -> bool:
+    lowered = combined.lower()
+    return any(keyword in lowered for keyword in SELFIE_KEYWORDS)
 
 
 @router.message(F.text, ~F.text.startswith("/"))
