@@ -23,7 +23,7 @@ DELIMITER = "|||"
 
 # Fixed appearance used to keep selfies visually consistent (FAL Flux).
 SELFIE_APPEARANCE = (
-    "a Romanian woman in her early thirties with long dark wavy hair, warm brown eyes, "
+    "a Romanian woman in her early thirties with long wavy dyed blonde hair, warm brown eyes, "
     "light olive skin, a small silver nose stud and soft natural makeup, "
     "wearing casual cozy clothes"
 )
