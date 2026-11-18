@@ -149,3 +149,19 @@ async def on_message(message: Message, container: Container) -> None:
     if container.debouncer is None:
         container.debouncer = Debouncer(container)
     await container.debouncer.enqueue(user_id, text)
+
+
+REFERENCE_PATH = "/tmp/aura_reference.jpg"
+
+
+@router.message(F.photo)
+async def on_photo(message: Message, container: Container) -> None:
+    """Save a forwarded photo as the face reference for consistent generations."""
+    try:
+        photo = message.photo[-1]  # largest resolution
+        file = await container.bot.get_file(photo.file_id)
+        await container.bot.download(file, destination=REFERENCE_PATH)
+        await message.answer("am salvat poza asta ca referinta pentru fata ✓")
+    except Exception:
+        logger.exception("Failed to save reference photo")
+        await message.answer("nu am reusit sa salvez poza, incearca din nou")
