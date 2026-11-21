@@ -51,6 +51,12 @@ class Settings(BaseSettings):
     nsfw_trigger: str = "goala"  # comma-separated trigger words for NSFW selfies
     selfie_nsfw_prompt: str = ""  # NSFW prompt suffix (filled by you)
 
+    # Userbot (Telethon - real Telegram account)
+    userbot_api_id: int | None = None
+    userbot_api_hash: str | None = None
+    userbot_phone: str | None = None
+    userbot_session: str = "userbot_session"
+
     @property
     def db_path(self) -> str:
         """Extract the plain SQLite file path from the SQLAlchemy-style URL."""
