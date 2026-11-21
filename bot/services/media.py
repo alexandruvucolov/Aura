@@ -99,8 +99,10 @@ async def generate_selfie(prompt: str, use_nsfw_lora: bool = False) -> bytes | N
         return None
     url = f"https://fal.run/{settings.fal_model}"
     headers = {"Authorization": f"Key {settings.fal_key}"}
-    payload = {"prompt": prompt, "image_size": "square_hd", "num_images": 1}
-    if use_nsfw_lora and settings.fal_lora_url:
+    payload = {"prompt": prompt, "image_size": "portrait_4_3", "num_images": 1}
+    if settings.fal_quality:
+        payload["quality"] = settings.fal_quality
+    if use_nsfw_lora and settings.fal_lora_url and "sdxl" in settings.fal_model:
         payload["loras"] = [{"path": settings.fal_lora_url, "scale": settings.fal_lora_scale}]
     try:
         async with httpx.AsyncClient(timeout=300) as client:

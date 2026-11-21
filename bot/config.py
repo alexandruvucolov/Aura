@@ -45,9 +45,10 @@ class Settings(BaseSettings):
     edge_voice: str = "ro-RO-AlinaNeural"
 
     # FAL image generation (selfies)
-    fal_model: str = "fal-ai/fast-sdxl"
+    fal_model: str = "openai/gpt-image-2"
     fal_lora_url: str | None = None
     fal_lora_scale: float = 1.0
+    fal_quality: str = "low"  # GPT Image quality: low / medium / high / auto
     nsfw_trigger: str = "goala"  # comma-separated trigger words for NSFW selfies
     selfie_nsfw_prompt: str = ""  # NSFW prompt suffix (filled by you)
 
