@@ -38,6 +38,7 @@ class Userbot:
         )
         self._buffers: dict[int, list[str]] = {}
         self._tasks: dict[int, asyncio.Task] = {}
+        self._entities: dict[int, object] = {}
 
     async def start(self) -> None:
         await self.client.connect()
@@ -53,12 +54,14 @@ class Userbot:
         if not event.message.text or event.message.text.startswith("/"):
             return
         user_id = event.sender_id
+        entity = event.input_sender or event.sender or user_id
         text = event.message.text
         now = datetime.now(ZoneInfo(self.settings.timezone))
         await self.db.record_user_message(user_id, text, now.isoformat())
-        await self._enqueue(user_id, text)
+        await self._enqueue(user_id, entity, text)
 
-    async def _enqueue(self, user_id: int, text: str) -> None:
+    async def _enqueue(self, user_id: int, entity, text: str) -> None:
+        self._entities[user_id] = entity
         self._buffers.setdefault(user_id, []).append(text)
         existing = self._tasks.get(user_id)
         if existing and not existing.done():
@@ -80,6 +83,7 @@ class Userbot:
             logger.exception("Userbot failed to respond to %s", user_id)
 
     async def _respond(self, user_id: int, texts: list[str]) -> None:
+        entity = self._entities.get(user_id, user_id)
         combined = "\n".join(texts)
         tz = ZoneInfo(self.settings.timezone)
         now = datetime.now(tz)
@@ -94,10 +98,10 @@ class Userbot:
         bubbles = llm.split_bubbles(reply) or [reply]
 
         for bubble in bubbles:
-            await self._typing(user_id)
+            await self._typing(entity)
             pause = min(TYPING_MAX_SECONDS, max(TYPING_MIN_SECONDS, TYPING_CHAR_SECONDS * len(bubble)))
             await asyncio.sleep(pause)
-            await self.client.send_message(user_id, bubble)
+            await self.client.send_message(entity, bubble)
             await self.db.add_message(user_id, "assistant", bubble)
 
         await self.db.set_last_interaction(user_id, now.isoformat())
